@@ -98,25 +98,35 @@ with st.form("main_form"):
     data_to_save['راي_متابع'] = st.text_area("رأي المتابع الفني")
     station_img = st.file_uploader("رفع صور الموقع / المحطة", type=['jpg', 'png', 'jpeg'])
 
-    submitted = st.form_submit_button("إرسال البيانات واعتماد التقرير ✅")
+  submitted = st.form_submit_button("إرسال البيانات واعتماد التقرير ✅")
 
     if submitted:
-        if not village and activity == "استكشاف":
+        # التحقق من وجود اسم القرية في حالة الاستكشاف
+        village_check = data_to_save.get('قرية', '')
+        
+        if activity == "استكشاف" and not village_check:
             st.warning("برجاء إدخال اسم القرية")
         else:
             with st.spinner("جاري تصنيف البيانات وحفظها في التابة المخصصة..."):
-                # تحديد التابة والصف
+                # تحديد التابة المناسبة
                 target_tab = ""
-                if activity == "استكشاف": target_tab = "Exploration"
-                elif activity == "رفع سجل متابعه": target_tab = "Station_Followup"
-                elif project_type == "خطوط مياة": target_tab = "Pipeline_Execution"
-                else: target_tab = "Connection_Execution"
+                if activity == "استكشاف": 
+                    target_tab = "Exploration"
+                elif activity == "رفع سجل متابعه": 
+                    target_tab = "Station_Followup"
+                elif project_type == "خطوط مياة": 
+                    target_tab = "Pipeline_Execution"
+                else: 
+                    target_tab = "Connection_Execution"
                 
                 ws = get_worksheet(target_tab)
                 if ws:
                     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    # تحويل القاموس لقائمة مرتبة (يجب تنسيق رؤوس الأعمدة في الشيت يدوياً أولاً)
+                    
+                    # تجهيز الصف بالترتيب
+                    # السطر ده بيحول كل القيم اللي جمعناها في data_to_save لصف واحد في الشيت
                     row = [timestamp, employee, project_type, activity] + list(data_to_save.values())
+                    
                     ws.append_row(row)
                     st.balloons()
-                    st.success(f"تم الحفظ في تابة [{target_tab}] بنجاح!")
+                    st.success(f"تم الحفظ في تابة [{target_tab}] بنجاح! مجهود مشكور يا م. أحمد.")
