@@ -52,7 +52,7 @@ with st.form("main_form"):
     if activity == "استكشاف":
         col1, col2 = st.columns(2)
         with col1:
-            data_to_save['محافظة'] = st.selectbox("المحافظة", ["قنا", "المنيا", "الشرقية", "أخرى"])
+            data_to_save['محافظة'] = st.selectbox("المحافظة", ["قنا", "المنيا", "سوهاج", "اسيوط"])
             data_to_save['مركز'] = st.text_input("المركز")
             data_to_save['قرية'] = st.text_input("القرية")
             data_to_save['تعداد'] = st.number_input("تعداد السكان", min_value=0)
