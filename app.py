@@ -1,47 +1,33 @@
 import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import json
 
 def connect_to_sheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     
-    # قراءة النص الخام من الخزنة وفكه كـ JSON
     try:
-        # بنجيب النص اللي إنت لزقته في الخزنة
-        json_string = st.secrets["gcp_service_account"]["full_json"]
+        # سحب البيانات كقاموس
+        creds_dict = dict(st.secrets["gcp_service_account"])
         
-        # بنحوله لبيانات حقيقية (السطر ده بيحل كل مشاكل التشفير والمسافات)
-        creds_info = json.loads(json_string)
-        
-        # تصليح السطور في المفتاح السري (ضرورية جداً)
-        if "private_key" in creds_info:
-            creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
+        # أهم سطر في الكود: تحويل الـ \n لنص حقيقي عشان جوجل تقبله
+        if "private_key" in creds_dict:
+            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
 
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_info, scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
         client = gspread.authorize(creds)
-        
-        # افتح الشيت
         sheet = client.open("بيانات مشروع الماء حياة 2").sheet1
         return sheet
     except Exception as e:
-        st.error(f"فشل الاتصال: {e}")
+        st.error(f"فشل الاتصال الفني: {e}")
         return None
 
-st.title("💧 منظومة الماء حياة - الإصدار النهائي")
+# واجهة بسيطة جداً للتأكد
+st.title("💧 تجربة الربط النهائية")
+name = st.text_input("اسم المحطة للتجربة")
 
-name = st.text_input("اسم المحطة")
-village = st.text_input("القرية")
-
-if st.button("حفظ البيانات 💾"):
-    if name and village:
-        sh = connect_to_sheet()
-        if sh:
-            try:
-                sh.append_row([name, village])
-                st.balloons()
-                st.success("أخيراً! تم الحفظ بنجاح.")
-            except Exception as e:
-                st.error(f"خطأ في الكتابة: {e}")
-    else:
-        st.warning("دخل البيانات يا هندسة")
+if st.button("حفظ الآن"):
+    sh = connect_to_sheet()
+    if sh:
+        sh.append_row([name, "تجربة نهائية"])
+        st.balloons()
+        st.success("أخيراً! السيستم نطق واشتغل يا هندسة")
