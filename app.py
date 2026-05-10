@@ -1,39 +1,45 @@
 import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import json
+import re
 
 def connect_to_sheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     
-    # تحويل البيانات لقاموس
-    creds_dict = dict(st.secrets["gcp_service_account"])
+    # 1. قراءة النص الخام من الخزنة
+    raw_json = st.secrets["gcp_service_account"]["json_creds"]
+    creds_info = json.loads(raw_json)
     
-    # --- الفلتر السحري: تنظيف المفتاح من أي حرف غريب ---
-    if "private_key" in creds_dict:
-        # مسح المسافات في الأول والآخر، وتصليح السطور، والتأكد من عدم وجود فراغات داخلية
-        key = creds_dict["private_key"]
-        key = key.replace("\\n", "\n").strip()
-        creds_dict["private_key"] = key
+    # 2. تنظيف المفتاح السري (الجزء الحساس)
+    if "private_key" in creds_info:
+        key = creds_info["private_key"]
+        # مسح أي مسافات أو سطور في بداية ونهاية المفتاح
+        key = key.strip()
+        # تصليح السطور (التحويل من \n لنص حقيقي) لو لزم الأمر
+        key = key.replace("\\n", "\n")
+        creds_info["private_key"] = key
 
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_info, scope)
     client = gspread.authorize(creds)
     sheet = client.open("بيانات مشروع الماء حياة 2").sheet1
     return sheet
 
-st.title("💧 نظام تسجيل محطات الماء حياة 2")
+st.title("💧 منظومة الماء حياة - الإصدار النهائي")
 
-# خانات التجربة
+# خانات إدخال البيانات
 name = st.text_input("اسم المحطة")
 village = st.text_input("القرية")
 
-if st.button("حفظ البيانات 💾"):
+if st.button("اعتماد وحفظ البيانات 💾"):
     if name and village:
         try:
             sh = connect_to_sheet()
             sh.append_row([name, village])
             st.balloons()
-            st.success(f"مبروك يا بشمهندس أحمد! {name} اتسجلت في الشيت.")
+            st.success(f"تم الحفظ بنجاح! مبروك يا م. أحمد.")
         except Exception as e:
-            st.error(f"خطأ أخير (بإذن الله): {e}")
+            # رسالة واضحة للمساعدة في التشخيص لو حصل حاجة
+            st.error(f"حدث خطأ فني: {e}")
     else:
-        st.warning("دخل البيانات عشان نجرب")
+        st.warning("يرجى ملء الخانات أولاً")
