@@ -1,36 +1,31 @@
- import streamlit as st
+import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+# دالة الربط المضمونة
 def connect_to_sheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    
-    # سحب البيانات مباشرة من الخزنة (بدون تحويل JSON يدوي)
+    # سحب البيانات من الخزنة كقاموس
     creds_info = st.secrets["gcp_service_account"]
-    
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_info, scope)
     client = gspread.authorize(creds)
     sheet = client.open("بيانات مشروع الماء حياة 2").sheet1
     return sheet
 
-st.title("💧 نظام التقييم الفني - الإصدار التجريبي")
+st.title("💧 نظام تسجيل المحطات - م. أحمد بدوي")
 
-# التبويبات المختصرة للتجربة
-tab1, tab2 = st.tabs(["📍 البيانات", "💾 الحفظ"])
+# خانات التجربة
+station = st.text_input("اسم المحطة")
+village = st.text_input("القرية")
 
-with tab1:
-    station = st.text_input("اسم المحطة")
-    village = st.text_input("القرية")
-
-with tab2:
-    if st.button("حفظ البيانات الآن"):
-        if station and village:
-            try:
-                sh = connect_to_sheet()
-                sh.append_row([station, village])
-                st.balloons()
-                st.success(f"مبروك يا م. أحمد! السطر نزل في الشيت.")
-            except Exception as e:
-                st.error(f"حدث خطأ أثناء الاتصال: {e}")
-        else:
-            st.warning("يرجى إدخال البيانات أولاً")
+if st.button("حفظ البيانات 💾"):
+    if station and village:
+        try:
+            sh = connect_to_sheet()
+            sh.append_row([station, village])
+            st.balloons()
+            st.success(f"مبروك يا هندسة! تم تسجيل {station} بنجاح.")
+        except Exception as e:
+            st.error(f"حدث خطأ: {e}")
+    else:
+        st.warning("يرجى إدخال البيانات")
