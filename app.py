@@ -11,11 +11,19 @@ def connect_to_sheet():
         creds_info = dict(st.secrets["gcp_service_account"])
         
         # تنظيف المفتاح السري من أي شوائب (حل مشكلة الـ 65 حرف والـ Base64)
+        # --- الفلتر النهائي القاطع للأخطاء ---
         if "private_key" in creds_info:
+            import re
             key = creds_info["private_key"]
-            key = key.strip() # مسح المسافات في الأول والآخر
-            key = key.replace("\\n", "\n") # تصليح تقطيع السطور
-            creds_info["private_key"] = key
+            header = "-----BEGIN PRIVATE KEY-----"
+            footer = "-----END PRIVATE KEY-----"
+            
+            if header in key and footer in key:
+                # بناخد اللي بين البداية والنهاية وبنمسح أي حرف مش (حروف، أرقام، +، /، =)
+                content = key.split(header)[1].split(footer)[0]
+                clean_content = re.sub(r'[^a-zA-Z0-9+/=]', '', content)
+                # بنركب المفتاح من جديد نضيف 100%
+                creds_info["private_key"] = f"{header}\n{clean_content}\n{footer}"
 
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_info, scope)
         client = gspread.authorize(creds)
