@@ -2,15 +2,21 @@ import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# دالة الربط الأبسط والأضمن (بدون تحويل JSON يدوي)
 def connect_to_sheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    # قراءة البيانات مباشرة كقاموس (Dictionary) من ستريمليت
-    creds_info = st.secrets["gcp_service_account"]
     
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_info, scope)
+    # تحويل البيانات لقاموس
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    
+    # --- الفلتر السحري: تنظيف المفتاح من أي حرف غريب ---
+    if "private_key" in creds_dict:
+        # مسح المسافات في الأول والآخر، وتصليح السطور، والتأكد من عدم وجود فراغات داخلية
+        key = creds_dict["private_key"]
+        key = key.replace("\\n", "\n").strip()
+        creds_dict["private_key"] = key
+
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
-    # افتح الشيت (تأكد من الاسم في جوجل)
     sheet = client.open("بيانات مشروع الماء حياة 2").sheet1
     return sheet
 
@@ -20,14 +26,14 @@ st.title("💧 نظام تسجيل محطات الماء حياة 2")
 name = st.text_input("اسم المحطة")
 village = st.text_input("القرية")
 
-if st.button("حفظ البيانات الآن 💾"):
+if st.button("حفظ البيانات 💾"):
     if name and village:
         try:
             sh = connect_to_sheet()
             sh.append_row([name, village])
             st.balloons()
-            st.success(f"مبروك يا هندسة! تم تسجيل {name} بنجاح.")
+            st.success(f"مبروك يا بشمهندس أحمد! {name} اتسجلت في الشيت.")
         except Exception as e:
-            st.error(f"حدث خطأ في الاتصال: {e}")
+            st.error(f"خطأ أخير (بإذن الله): {e}")
     else:
-        st.warning("يرجى إدخال البيانات")
+        st.warning("دخل البيانات عشان نجرب")
