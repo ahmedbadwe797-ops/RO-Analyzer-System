@@ -4,8 +4,11 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 def connect_to_sheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds_info = st.secrets["gcp_service_account"]
-    # السطر اللي جاي ده هو "المسكن" اللي هيحل مشكلة الـ Signature لو فيه مسافات زيادة
+    
+    # تحويل الأسرار لـ "قاموس" عادي عشان نقدر نعدل فيه (حل مشكلة item assignment)
+    creds_info = dict(st.secrets["gcp_service_account"])
+    
+    # تصليح شكل المفتاح السري
     if "private_key" in creds_info:
         creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
     
@@ -14,9 +17,9 @@ def connect_to_sheet():
     sheet = client.open("بيانات مشروع الماء حياة 2").sheet1
     return sheet
 
-st.title("💧 نظام تسجيل المحطات - نسخة التجربة")
+st.title("💧 نظام تسجيل المحطات - تجربة")
 
-# بيانات بسيطة للتجربة
+# الخانات البسيطة اللي جربناها
 name = st.text_input("اسم المحطة")
 village = st.text_input("القرية")
 
