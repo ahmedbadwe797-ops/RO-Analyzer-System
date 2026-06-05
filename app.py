@@ -83,4 +83,4 @@ with st.sidebar:
     
     if project_type == "محطات تحليه":
         activity = st.radio("النشاط الحالي", ["استكشاف", "رفع سجل متابعه"])
-    elif project_
+elif project_type == "وصلات مياه":
