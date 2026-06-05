@@ -84,4 +84,75 @@ with st.sidebar:
     if project_type == "محطات تحليه":
         activity = st.radio("النشاط الحالي", ["استكشاف", "رفع سجل متابعه"])
     elif project_type == "وصلات مياه":
-        activity =
+        activity = st.radio("النشاط الحالي", ["استكشاف", "تنفيذ تسكين"])
+    else:
+        activity = st.radio("النشاط الحالي", ["استكشاف", "تنفيذ"])
+
+# 5. بناء النموذج (Form)
+with st.form(key="main_form"):
+    st.subheader(f"📋 {project_type} - {activity}")
+    d = {} # قاموس لتخزين المدخلات
+    
+    if activity == "استكشاف":
+        c1, c2 = st.columns(2)
+        with c1:
+            d['محافظة'] = st.selectbox("المحافظة", ["قنا", "المنيا", "الشرقية", "أخرى"])
+            d['مركز'] = st.text_input("المركز")
+            d['قرية'] = st.text_input("القرية")
+            d['تعداد'] = st.number_input("تعداد السكان", min_value=0)
+        with c2:
+            d['غرفة'] = st.radio("جاهزية الغرفة", ["جاهزة", "غير جاهزة", "لا توجد"])
+            d['املاح'] = st.number_input("أملاح مياه القرية (PPM)", min_value=0)
+            d['مسؤول'] = st.text_input("الجمعية / المسؤول")
+            d['هاتف'] = st.text_input("رقم التليفون")
+        d['لوكيشن'] = st.text_input("لينك اللوكيشن")
+        if project_type == "وصلات مياه":
+            d['عدد_وصلات'] = st.number_input("العدد المتوقع", min_value=0)
+            d['حالة_بيت'] = st.selectbox("حالة البيوت", ["متهالكة", "متوسطة", "جيدة"])
+            d['فقر'] = st.select_slider("مستوى الاحتياج", options=["متوسط", "شديد", "معدم"])
+
+    elif activity == "رفع سجل متابعه":
+        c1, c2 = st.columns(2)
+        with c1:
+            d['املاح_دخول'] = st.number_input("الأملاح دخول", min_value=0)
+            d['املاح_خروج'] = st.number_input("الأملاح خروج", min_value=0)
+            d['ضغط'] = st.number_input("الضغط (Bar)", min_value=0.0)
+            d['مواتير'] = st.selectbox("المواتير", ["ممتازة", "صيانة", "عطلانة"])
+        with c2:
+            d['فيزلات'] = st.text_input("حالة الفيزلات")
+            d['ممبرين'] = st.text_input("حالة الممبرينات")
+            d['نوع_شمع'] = st.selectbox("نوع الشمع", ["10 عادي", "10 جامبو", "20 عادي", "20 جامبو"])
+            d['عدد_شمع'] = st.number_input("عدد الشمع", min_value=0)
+
+    elif "تنفيذ" in activity:
+        if project_type == "وصلات مياه":
+            d['متبرع'] = st.text_input("اسم المتبرع")
+        d['مواصفات'] = st.text_area("تفاصيل التنفيذ")
+        d['لوكيشن'] = st.text_input("لينك اللوكيشن")
+
+    d['شكوى'] = st.text_area("الشكاوى")
+    d['راي'] = st.text_area("رأي المتابع")
+    
+    # زر الإرسال والاعتماد
+    submitted = st.form_submit_button("إرسال البيانات واعتماد التقرير ✅")
+
+# 6. معالجة البيانات وإرسالها لـ Google Sheets (خارج بلوك الفورم)
+if submitted:
+    if activity == "استكشاف" and not d.get('قرية'):
+        st.warning("⚠️ برجاء إدخال اسم القرية")
+    else:
+        with st.spinner("جاري حفظ البيانات في السجل الموحد..."):
+            target_tab = {
+                "استكشاف": "Exploration",
+                "رفع سجل متابعه": "Station_Followup",
+                "تنفيذ": "Pipeline_Execution",
+                "تنفيذ تسكين": "Connection_Execution"
+            }.get(activity, "Exploration")
+            
+            ws = get_worksheet(target_tab)
+            if ws:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                row_data = [timestamp, employee, project_type, activity] + list(d.values())
+                ws.append_row(row_data)
+                st.balloons()
+                st.success(f"تم الحفظ بنجاح في قاعدة بيانات: {target_tab}")
