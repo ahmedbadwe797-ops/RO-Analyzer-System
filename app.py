@@ -6,7 +6,7 @@ from datetime import datetime
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="منظومة ومن الماء حياة 2", page_icon="💧", layout="wide")
 
-# 🎨 2. حقن الـ CSS المخصص لتعديل الألوان والمظهر
+# 🎨 2. حقن الـ CSS المخصص لتعديل الألوان والمظهر واجهات المنظومة
 st.markdown("""
     <style>
         /* تحسين وتلوين العنوان الرئيسي للمنظومة */
@@ -83,4 +83,5 @@ with st.sidebar:
     
     if project_type == "محطات تحليه":
         activity = st.radio("النشاط الحالي", ["استكشاف", "رفع سجل متابعه"])
-elif project_type == "وصلات مياه":
+    elif project_type == "وصلات مياه":
+        activity =
